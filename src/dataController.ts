@@ -29,7 +29,7 @@ class DataController {
   };
 
   showWrongIdMsg = (res: http.ServerResponse): void => {
-    res.writeHead(404, { "Content-type": "application/json" });
+    res.writeHead(400, { "Content-type": "application/json" });
     res.write(JSON.stringify({ message: messages.incorrectId }));
     res.end();
   };
