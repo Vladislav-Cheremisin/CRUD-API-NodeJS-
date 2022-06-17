@@ -24,10 +24,21 @@ const startServer = (): void => {
           }
 
           break;
-
         case "POST":
           if (url === "/api/users") {
             controller.createUser(req, res);
+          } else {
+            controller.showWrongUrlMsg(res);
+          }
+
+          break;
+        case "PUT":
+          if (controller.isUrlHaveUuid(url)) {
+            if (controller.isUuidValid(url)) {
+              controller.updateData(req, res, url);
+            } else {
+              controller.showWrongIdMsg(res);
+            }
           } else {
             controller.showWrongUrlMsg(res);
           }

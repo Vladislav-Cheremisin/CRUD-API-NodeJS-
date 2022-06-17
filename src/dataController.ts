@@ -75,32 +75,110 @@ class DataController {
     }
   };
 
+  updateData = async (
+    req: events.EventEmitter,
+    res: http.ServerResponse,
+    url: string | undefined
+  ): Promise<void> => {
+    try {
+      if (url !== undefined) {
+        const uuid = this.getUuidFromUrl(url);
+        const user = model.getUser(uuid);
+
+        if (user) {
+          let reqBody: string = "";
+
+          req.on("data", (chunk) => {
+            reqBody += chunk.toString();
+          });
+
+          req.on("end", async () => {
+            const updatedUser: User | undefined = await this.parseReqBody(
+              res,
+              reqBody,
+              true,
+              user
+            );
+            const id: string | undefined = updatedUser?.id;
+
+            if (updatedUser !== undefined && id !== undefined) {
+              model.updateUser(updatedUser);
+
+              res.writeHead(200, { "Content-type": "application/json" });
+              res.write(JSON.stringify(model.getUser(id)));
+              res.end();
+            }
+          });
+        } else {
+          res.writeHead(404, { "Content-type": "application/json" });
+          res.write(JSON.stringify({ message: messages.userNotExist }));
+          res.end();
+        }
+      }
+    } catch (err) {
+      if (err) {
+        this.showServerErrMsg(res);
+      }
+    }
+  };
+
   parseReqBody = async (
     res: http.ServerResponse,
-    reqBody: string
+    reqBody: string,
+    putMethod: boolean = false,
+    user: User | null = null
   ): Promise<User | undefined> => {
     try {
       const parsedJSON: User = JSON.parse(reqBody);
       const objKeys: string[] = Object.keys(parsedJSON);
 
-      if (
-        objKeys.includes("username") &&
-        typeof parsedJSON["username"] === "string" &&
-        objKeys.includes("age") &&
-        typeof parsedJSON["age"] === "number" &&
-        objKeys.includes("hobbies") &&
-        this.isStringArr(parsedJSON["hobbies"])
-      ) {
-        const newUser: User = {
-          id: uuid.v4(),
-          username: parsedJSON["username"],
-          age: parsedJSON["age"],
-          hobbies: parsedJSON["hobbies"],
-        };
+      if (putMethod) {
+        const userToUpdate: User | null = user;
 
-        return newUser;
+        if (userToUpdate !== null) {
+          if (
+            objKeys.includes("username") &&
+            typeof parsedJSON["username"] === "string"
+          ) {
+            userToUpdate.username = parsedJSON["username"];
+          }
+
+          if (
+            objKeys.includes("age") &&
+            typeof parsedJSON["age"] === "number"
+          ) {
+            userToUpdate.age = parsedJSON["age"];
+          }
+
+          if (
+            objKeys.includes("hobbies") &&
+            this.isStringArr(parsedJSON["hobbies"])
+          ) {
+            userToUpdate.hobbies = parsedJSON["hobbies"];
+          }
+
+          return userToUpdate;
+        }
       } else {
-        throw new Error("Incorrect req body!");
+        if (
+          objKeys.includes("username") &&
+          typeof parsedJSON["username"] === "string" &&
+          objKeys.includes("age") &&
+          typeof parsedJSON["age"] === "number" &&
+          objKeys.includes("hobbies") &&
+          this.isStringArr(parsedJSON["hobbies"])
+        ) {
+          const newUser: User = {
+            id: uuid.v4(),
+            username: parsedJSON["username"],
+            age: parsedJSON["age"],
+            hobbies: parsedJSON["hobbies"],
+          };
+
+          return newUser;
+        } else {
+          throw new Error("Incorrect req body!");
+        }
       }
     } catch (err) {
       if (err) {

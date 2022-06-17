@@ -24,6 +24,16 @@ class DataModel {
       this.data.push(user);
     }
   };
+
+  public updateUser = (updatedUser: User): void => {
+    console.log(updatedUser);
+
+    this.data.forEach((user) => {
+      if (user.id === updatedUser.id) {
+        user = updatedUser;
+      }
+    });
+  };
 }
 
 const model = new DataModel();
