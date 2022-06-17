@@ -1,9 +1,13 @@
 import http from "http";
+import dotenv from "dotenv";
 
 import controller from "./src/dataController";
 
+dotenv.config();
+
 const startServer = (): void => {
-  const PORT: number = 5000;
+  let PORT: string = process.env.PORT || process.env.RESERVE_PORT || "3000";
+
   const server: http.Server = http.createServer(async (req, res) => {
     try {
       const url: string | undefined = req.url;
@@ -67,7 +71,7 @@ const startServer = (): void => {
     }
   });
 
-  server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  server.listen(+PORT, () => console.log(`Server running on port ${PORT}`));
 };
 
 startServer();
