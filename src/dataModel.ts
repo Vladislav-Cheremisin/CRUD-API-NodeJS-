@@ -26,13 +26,21 @@ class DataModel {
   };
 
   public updateUser = (updatedUser: User): void => {
-    console.log(updatedUser);
-
     this.data.forEach((user) => {
       if (user.id === updatedUser.id) {
         user = updatedUser;
       }
     });
+  };
+
+  public deleteUser = (userToDelete: User | undefined): void => {
+    if (userToDelete !== undefined) {
+      this.data.forEach((user, index) => {
+        if (userToDelete.id === user.id) {
+          this.data.splice(index, 1);
+        }
+      });
+    }
   };
 }
 

@@ -44,6 +44,18 @@ const startServer = (): void => {
           }
 
           break;
+        case "DELETE":
+          if (controller.isUrlHaveUuid(url)) {
+            if (controller.isUuidValid(url)) {
+              controller.deleteData(res, url);
+            } else {
+              controller.showWrongIdMsg(res);
+            }
+          } else {
+            controller.showWrongUrlMsg(res);
+          }
+
+          break;
       }
     } catch (err) {
       if (err) {

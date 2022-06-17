@@ -122,6 +122,33 @@ class DataController {
     }
   };
 
+  deleteData = async (
+    res: http.ServerResponse,
+    url: string | undefined
+  ): Promise<void> => {
+    try {
+      if (url !== undefined) {
+        const uuid = this.getUuidFromUrl(url);
+        const user = model.getUser(uuid);
+
+        if (user) {
+          model.deleteUser(user);
+
+          res.writeHead(204, { "Content-type": "application/json" });
+          res.end();
+        } else {
+          res.writeHead(404, { "Content-type": "application/json" });
+          res.write(JSON.stringify({ message: messages.userNotExist }));
+          res.end();
+        }
+      }
+    } catch (err) {
+      if (err) {
+        this.showServerErrMsg(res);
+      }
+    }
+  };
+
   parseReqBody = async (
     res: http.ServerResponse,
     reqBody: string,
