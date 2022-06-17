@@ -244,6 +244,12 @@ class DataController {
     res.end();
   };
 
+  showMethodErr = (res: http.ServerResponse): void => {
+    res.writeHead(501, { "Content-type": "application/json" });
+    res.write(JSON.stringify({ message: messages.notImplemented }));
+    res.end();
+  };
+
   showServerErrMsg = (res: http.ServerResponse): void => {
     res.writeHead(500, { "Content-type": "application/json" });
     res.write(JSON.stringify({ message: messages.serverError }));

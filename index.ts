@@ -56,6 +56,9 @@ const startServer = (): void => {
           }
 
           break;
+        default:
+          controller.showMethodErr(res);
+          break;
       }
     } catch (err) {
       if (err) {
