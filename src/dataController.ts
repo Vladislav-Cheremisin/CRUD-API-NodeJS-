@@ -1,30 +1,129 @@
 import http from "http";
+import events from "events";
 import * as uuid from "uuid";
 
 import model from "./dataModel";
 import messages from "./messages";
+import User from "./types";
 
 class DataController {
-  showAllUsers = (res: http.ServerResponse): void => {
-    res.writeHead(200, { "Content-type": "application/json" });
-    res.write(JSON.stringify(model.data));
-    res.end();
+  showAllUsers = async (res: http.ServerResponse): Promise<void> => {
+    try {
+      res.writeHead(200, { "Content-type": "application/json" });
+      res.write(JSON.stringify(model.data));
+      res.end();
+    } catch (err) {
+      if (err) {
+        this.showServerErrMsg(res);
+      }
+    }
   };
 
-  showUser = (res: http.ServerResponse, url: string | undefined): void => {
-    if (url !== undefined) {
-      const uuid = this.getUuidFromUrl(url);
-      const user = model.getUser(uuid);
+  showUser = async (
+    res: http.ServerResponse,
+    url: string | undefined
+  ): Promise<void> => {
+    try {
+      if (url !== undefined) {
+        const uuid = this.getUuidFromUrl(url);
+        const user = model.getUser(uuid);
 
-      if (user) {
-        res.writeHead(200, { "Content-type": "application/json" });
-        res.write(JSON.stringify(user));
-        res.end();
+        if (user) {
+          res.writeHead(200, { "Content-type": "application/json" });
+          res.write(JSON.stringify(user));
+          res.end();
+        } else {
+          res.writeHead(404, { "Content-type": "application/json" });
+          res.write(JSON.stringify({ message: messages.userNotExist }));
+          res.end();
+        }
+      }
+    } catch (err) {
+      if (err) {
+        this.showServerErrMsg(res);
+      }
+    }
+  };
+
+  createUser = async (
+    req: events.EventEmitter,
+    res: http.ServerResponse
+  ): Promise<void> => {
+    try {
+      let reqBody: string = "";
+
+      req.on("data", (chunk) => {
+        reqBody += chunk.toString();
+      });
+
+      req.on("end", async () => {
+        const newUser: User | undefined = await this.parseReqBody(res, reqBody);
+        const id: string | undefined = newUser?.id;
+
+        if (newUser !== undefined && id !== undefined) {
+          model.addNewUser(newUser);
+
+          res.writeHead(201, { "Content-type": "application/json" });
+          res.write(JSON.stringify(model.getUser(id)));
+          res.end();
+        }
+      });
+    } catch (err) {
+      if (err) {
+        this.showServerErrMsg(res);
+      }
+    }
+  };
+
+  parseReqBody = async (
+    res: http.ServerResponse,
+    reqBody: string
+  ): Promise<User | undefined> => {
+    try {
+      const parsedJSON: User = JSON.parse(reqBody);
+      const objKeys: string[] = Object.keys(parsedJSON);
+
+      if (
+        objKeys.includes("username") &&
+        typeof parsedJSON["username"] === "string" &&
+        objKeys.includes("age") &&
+        typeof parsedJSON["age"] === "number" &&
+        objKeys.includes("hobbies") &&
+        this.isStringArr(parsedJSON["hobbies"])
+      ) {
+        const newUser: User = {
+          id: uuid.v4(),
+          username: parsedJSON["username"],
+          age: parsedJSON["age"],
+          hobbies: parsedJSON["hobbies"],
+        };
+
+        return newUser;
       } else {
-        res.writeHead(404, { "Content-type": "application/json" });
-        res.write(JSON.stringify({ message: messages.userNotExist }));
+        throw new Error("Incorrect req body!");
+      }
+    } catch (err) {
+      if (err) {
+        res.writeHead(400, { "Content-type": "application/json" });
+        res.write(JSON.stringify({ message: messages.incorrectReqBody }));
         res.end();
       }
+    }
+  };
+
+  isStringArr = (arr: object): boolean => {
+    if (Array.isArray(arr)) {
+      let result = true;
+
+      arr.forEach((el) => {
+        if (typeof el !== "string") {
+          result = false;
+        }
+      });
+
+      return result;
+    } else {
+      return false;
     }
   };
 
@@ -37,6 +136,12 @@ class DataController {
   showWrongUrlMsg = (res: http.ServerResponse): void => {
     res.writeHead(404, { "Content-type": "application/json" });
     res.write(JSON.stringify({ message: messages.incorrectURL }));
+    res.end();
+  };
+
+  showServerErrMsg = (res: http.ServerResponse): void => {
+    res.writeHead(500, { "Content-type": "application/json" });
+    res.write(JSON.stringify({ message: messages.serverError }));
     res.end();
   };
 

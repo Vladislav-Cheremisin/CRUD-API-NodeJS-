@@ -2,10 +2,10 @@ import http from "http";
 
 import controller from "./src/dataController";
 
-const startServer = async (): Promise<void> => {
-  try {
-    const PORT: number = 5000;
-    const server: http.Server = http.createServer((req, res) => {
+const startServer = (): void => {
+  const PORT: number = 5000;
+  const server: http.Server = http.createServer(async (req, res) => {
+    try {
       const url: string | undefined = req.url;
       const method: string | undefined = req.method;
 
@@ -24,13 +24,24 @@ const startServer = async (): Promise<void> => {
           }
 
           break;
-      }
-    });
 
-    server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  } catch (err) {
-    throw err;
-  }
+        case "POST":
+          if (url === "/api/users") {
+            controller.createUser(req, res);
+          } else {
+            controller.showWrongUrlMsg(res);
+          }
+
+          break;
+      }
+    } catch (err) {
+      if (err) {
+        controller.showServerErrMsg(res);
+      }
+    }
+  });
+
+  server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 };
 
 startServer();

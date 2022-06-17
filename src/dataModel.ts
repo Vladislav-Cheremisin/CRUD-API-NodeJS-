@@ -4,14 +4,7 @@ class DataModel {
   public data: User[];
 
   constructor() {
-    this.data = [
-      {
-        id: "53afa42b-2c38-453a-a1b3-10c59766cef0",
-        username: "Vladislav",
-        age: 24,
-        hobbies: ["airsoft", "programming"],
-      },
-    ];
+    this.data = [];
   }
 
   public getUser = (uuid: string): User | null => {
@@ -24,6 +17,12 @@ class DataModel {
     });
 
     return result;
+  };
+
+  public addNewUser = (user: User | undefined): void => {
+    if (user !== undefined) {
+      this.data.push(user);
+    }
   };
 }
 
